@@ -24,6 +24,7 @@ pub struct RIFFTImpl<T> {
 
 #[inline]
 fn cast<T: FFTnum>(arr: &mut [T]) -> &mut [Complex<T>] {
+    assert!(arr.len() % 2 == 0);
     let new_len = arr.len() >> 1;
     unsafe {
         let ptr = arr.as_mut_ptr() as *mut Complex<T>;
