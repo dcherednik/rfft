@@ -27,6 +27,7 @@ mod tests {
 
 
     fn check_rfft(mut src: Vec<f64>) {
+        let ref_value = src.clone();
         let mut input2: Vec<Complex<f64>> = vec![Zero::zero(); src.len()];
         for i in 0..src.len() {
             input2[i].re = src[i];
@@ -49,7 +50,7 @@ mod tests {
         let rifft = RIFFTImpl::new(src.len());
         rifft.process(&mut spectrum1, &mut tmp);
         for i in 0..src.len() {
-            assert_eq!((10000f64 * src[i]).round(), (10000f64 * tmp[i]/2048.0).round());
+            assert_eq!((10000f64 * ref_value[i]).round(), (10000f64 * tmp[i]/2048.0).round());
         }
     }
     #[test]

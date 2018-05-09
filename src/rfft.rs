@@ -1,10 +1,12 @@
 extern crate num;
 
 use std::f64::consts::PI;
+use std::slice;
+
 use rustfft::{FFT, FFTnum};
 use rustfft::algorithm::Radix4;
+use rustfft::num_traits::{FromPrimitive};
 use rfft::num::complex::Complex;
-use rustfft::num_traits::{Zero, FromPrimitive};
 
 use ::{RFFT, RIFFT, Length};
 
@@ -18,6 +20,15 @@ pub struct RIFFTImpl<T> {
     len: usize,
     cos: Box<[T]>,
     fft: Box<FFT<T>>
+}
+
+#[inline]
+fn cast<T: FFTnum>(arr: &mut [T]) -> &mut [Complex<T>] {
+    let new_len = arr.len() >> 1;
+    unsafe {
+        let ptr = arr.as_mut_ptr() as *mut Complex<T>;
+        (slice::from_raw_parts_mut(ptr, new_len))
+    }
 }
 
 fn gen_cos<T: FFTnum>(len: usize) -> Vec<T> {
@@ -43,13 +54,8 @@ impl<T: FFTnum> RFFTImpl<T> {
 impl<T: FFTnum> RFFT<T> for RFFTImpl<T> {
 
     fn process(&self, input: &mut [T], mut output: &mut [Complex<T>]) {
-        let mut tmp: Vec<Complex<T>> = vec![Zero::zero(); self.len / 2];
-        for i in 0..self.len / 2 {
-            tmp[i].re = input[2 * i];
-            tmp[i].im = input[2 * i + 1];
-        }
 
-        self.fft.process(&mut tmp, &mut output);
+        self.fft.process(cast(input), &mut output);
 
         let dc = output[0].re;
         output[0].re = dc + output[0].im;
@@ -123,13 +129,7 @@ impl<T: FFTnum> RIFFT<T> for RIFFTImpl<T> {
             input[j].im = sum_im - a_im;
         }
 
-        let mut tmp: Vec<Complex<T>> = vec![Zero::zero(); self.len / 2];
-        self.fft.process(&mut input, &mut tmp);
-
-        for i in 0..self.len / 2 {
-            output[2 * i] = tmp[i].re;
-            output[2 * i + 1] = tmp[i].im;
-        }
+        self.fft.process(&mut input, cast(output));
     }
 }
 
