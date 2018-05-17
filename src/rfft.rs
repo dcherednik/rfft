@@ -5,7 +5,7 @@ use std::slice;
 
 use rustfft::{FFT, FFTnum};
 use rustfft::algorithm::Radix4;
-use rustfft::num_traits::{FromPrimitive};
+use rustfft::num_traits::FromPrimitive;
 use rfft::num::complex::Complex;
 
 use ::{RFFT, RIFFT, Length};
@@ -81,6 +81,8 @@ impl<T: FFTnum> RFFT<T> for RFFTImpl<T> {
             output[j].re = a_re - sum_re;
             output[j].im = sum_im - a_im;
         }
+        let sign: T = FromPrimitive::from_f64(-1.0f64).unwrap();
+        output[end_table].im = sign * output[end_table].im;
     }
 }
 
@@ -129,6 +131,8 @@ impl<T: FFTnum> RIFFT<T> for RIFFTImpl<T> {
             input[j].re = a_re - sum_re;
             input[j].im = sum_im - a_im;
         }
+        let sign: T = FromPrimitive::from_f64(-1.0f64).unwrap();
+        input[end_table].im = sign * input[end_table].im;
 
         self.fft.process(&mut input, cast(output));
     }

@@ -26,41 +26,104 @@ mod tests {
     use rustfft::algorithm::Radix4;
 
 
-    fn check_rfft(mut src: Vec<f64>) {
+    fn check_rfft(sz: usize) {
+        let mut src: Vec<f64> = vec![Zero::zero(); sz];
+        for i in 0..sz {
+            src[i] = ((PI * (i as f64) / 4096 as f64).cos()) as f64;
+        }
         let ref_value = src.clone();
+
         let mut input2: Vec<Complex<f64>> = vec![Zero::zero(); src.len()];
         for i in 0..src.len() {
             input2[i].re = src[i];
+            input2[i].im = 0.0f64;
         }
+
         let mut spectrum1: Vec<Complex<f64>> = vec![Zero::zero(); src.len() / 2];
         let mut spectrum2: Vec<Complex<f64>> = vec![Zero::zero(); src.len()];
+        let end = spectrum1.len();
 
         let ref_fft = Radix4::new(src.len(), false);
         ref_fft.process(&mut input2, &mut spectrum2);
 
         let rfft = RFFTImpl::new(src.len());
+
         rfft.process(&mut src, &mut spectrum1);
 
-        for i in 0..src.len() / 2 {
-            assert_eq!((10000f64 * spectrum1[i].re).round(), (10000f64 * spectrum2[i].re).round());
-            assert_eq!((10000f64 * spectrum1[i].im).round(), (10000f64 * spectrum2[i].im).round());
+        assert_eq!(spectrum1.len(), src.len() / 2);
+        let mut fake_zero: Complex<f64> = Zero::zero();
+        fake_zero.re = spectrum2[0].re;
+        fake_zero.im = spectrum2[end].re;
+        let mut t = (spectrum1[0] - fake_zero).norm();
+        for i in 1..src.len() / 2 {
+            t += (spectrum1[i] - spectrum2[i]).norm();
         }
+        assert!((t/spectrum1.len() as f64) < 0.000000001f64);
+
+        //let mut spectrum3: Vec<Complex<f64>> = vec![Zero::zero(); src.len()];
+        //for i in 0..src.len() / 2 {
+        //    spectrum3[i] = spectrum1[i];
+        //    if i != 0 {
+        //        spectrum3[sz - i].re = spectrum1[i].re;
+        //        spectrum3[sz - i].im = -spectrum1[i].im;
+        //    }
+        //}
+        //spectrum3[0].im = 0.0f64;
+        //spectrum3[end].re = spectrum1[0].im;
+
 
         let mut tmp: Vec<f64> = vec![Zero::zero(); src.len()];
+
         let rifft = RIFFTImpl::new(src.len());
         rifft.process(&mut spectrum1, &mut tmp);
+        //let ref_ifft = Radix4::new(src.len(), true);
+        //let mut res2: Vec<Complex<f64>> = vec![Zero::zero(); src.len()];
+        //ref_ifft.process(&mut spectrum3, &mut res2);
+
+        t = 0f64;
         for i in 0..src.len() {
-            assert_eq!((10000f64 * ref_value[i]).round(), (10000f64 * tmp[i]/2048.0).round());
+            t += (ref_value[i] - (tmp[i]/(sz >> 1) as f64)).abs();
         }
+        assert!((t/src.len() as f64) < 0.00000001f64);
     }
+
     #[test]
-    fn rfft_test() {
-        let mut src: Vec<f64> = vec![Zero::zero(); 4096];
-        for i in 0..4096 {
-            src[i] = ((PI * (i as f64) / 512 as f64).cos()) as f64;
+    fn rfft_test_4096() {
+        check_rfft(4096);
+    }
+
+    #[test]
+    fn rfft_test_2048() {
+        check_rfft(2048);
+    }
+
+    #[test]
+    fn rfft_test_1024() {
+        check_rfft(1024);
+    }
+
+    #[test]
+    fn rfft_test_512() {
+        check_rfft(512);
+    }
+
+    #[test]
+    fn rfft_test_16() {
+        check_rfft(16);
+    }
+
+    #[test]
+    fn rifft_test_dc() {
+        let sz: usize = 16;
+        let val: f64 = 16.0f64;
+        let mut spectrum1: Vec<Complex<f64>> = vec![Zero::zero(); sz/2];
+        let mut tmp: Vec<f64> = vec![Zero::zero(); sz];
+        spectrum1[0].re = val;
+
+        let rifft = RIFFTImpl::new(sz);
+        rifft.process(&mut spectrum1, &mut tmp);
+        for i in 0..tmp.len() {
+            assert!((tmp[i]/(sz >> 1) as f64 - val / sz as f64).abs() < 0.000000001f64);
         }
-        check_rfft(src);
     }
 }
-
-
