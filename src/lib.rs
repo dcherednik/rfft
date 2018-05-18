@@ -1,6 +1,5 @@
 pub extern crate num_complex;
 extern crate rustfft;
-extern crate num;
 
 use num_complex::Complex;
 
@@ -20,7 +19,7 @@ pub trait RIFFT<T: FFTnum>: Length + Sync + Send {
 mod tests {
     use super::*;
     use rustfft::FFT;
-    use self::num::complex::Complex;
+    use rustfft::num_complex::Complex;
     use rustfft::num_traits::Zero;
     use std::f64::consts::PI;
     use rustfft::algorithm::Radix4;
@@ -60,25 +59,10 @@ mod tests {
         }
         assert!((t/spectrum1.len() as f64) < 0.000000001f64);
 
-        //let mut spectrum3: Vec<Complex<f64>> = vec![Zero::zero(); src.len()];
-        //for i in 0..src.len() / 2 {
-        //    spectrum3[i] = spectrum1[i];
-        //    if i != 0 {
-        //        spectrum3[sz - i].re = spectrum1[i].re;
-        //        spectrum3[sz - i].im = -spectrum1[i].im;
-        //    }
-        //}
-        //spectrum3[0].im = 0.0f64;
-        //spectrum3[end].re = spectrum1[0].im;
-
-
         let mut tmp: Vec<f64> = vec![Zero::zero(); src.len()];
 
         let rifft = RIFFTImpl::new(src.len());
         rifft.process(&mut spectrum1, &mut tmp);
-        //let ref_ifft = Radix4::new(src.len(), true);
-        //let mut res2: Vec<Complex<f64>> = vec![Zero::zero(); src.len()];
-        //ref_ifft.process(&mut spectrum3, &mut res2);
 
         t = 0f64;
         for i in 0..src.len() {

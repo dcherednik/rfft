@@ -1,12 +1,10 @@
-extern crate num;
-
+use num_complex::Complex;
 use std::f64::consts::PI;
 use std::slice;
 
 use rustfft::{FFT, FFTnum};
 use rustfft::algorithm::Radix4;
 use rustfft::num_traits::FromPrimitive;
-use rfft::num::complex::Complex;
 
 use ::{RFFT, RIFFT, Length};
 
