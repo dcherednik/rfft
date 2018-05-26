@@ -32,7 +32,7 @@ fn cast<T: FFTnum>(arr: &mut [T]) -> &mut [Complex<T>] {
 
 fn gen_cos<T: FFTnum>(len: usize) -> Vec<T> {
     let mut cos_table = Vec::with_capacity(len);
-    let n = len * 2;
+    let n = len << 1;
     for i in 0..len {
         cos_table.push(FromPrimitive::from_f64((PI * (i as f64) / n as f64).cos()).unwrap());
     }
@@ -41,11 +41,11 @@ fn gen_cos<T: FFTnum>(len: usize) -> Vec<T> {
 
 impl<T: FFTnum> RFFTImpl<T> {
     pub fn new(len: usize) -> Self {
-        let cos = gen_cos(len / 4);
+        let cos = gen_cos(len >> 2);
         RFFTImpl {
             len: len,
             cos: cos.into_boxed_slice(),
-            fft: Box::new(Radix4::new(len / 2, false)),
+            fft: Box::new(Radix4::new(len >> 1, false)),
         }
     }
 }
@@ -60,13 +60,13 @@ impl<T: FFTnum> RFFT<T> for RFFTImpl<T> {
         output[0].re = dc + output[0].im;
         output[0].im = dc - output[0].im;
 
-        let end_table = self.len / 4;
+        let end_table = self.len >> 2;
         let m: T = FromPrimitive::from_f64(0.5f64).unwrap();
 
         for i in 1..end_table {
             let cos_idx = i;
             let sin_idx = end_table - i;
-            let j = self.len / 2 - i;
+            let j = (self.len >> 1) - i;
 
             let a_re = m * (output[i].re + output[j].re);
             let b_im = m * (output[j].re - output[i].re);
@@ -93,11 +93,11 @@ impl<T> Length for RFFTImpl<T> {
 
 impl<T: FFTnum> RIFFTImpl<T> {
     pub fn new(len: usize) -> Self {
-        let cos = gen_cos(len / 4);
+        let cos = gen_cos(len >> 2);
         RIFFTImpl {
             len: len,
             cos: cos.into_boxed_slice(),
-            fft: Box::new(Radix4::new(len / 2, true)),
+            fft: Box::new(Radix4::new(len >> 1, true)),
         }
     }
 }
@@ -110,12 +110,12 @@ impl<T: FFTnum> RIFFT<T> for RIFFTImpl<T> {
         input[0].re = m * (dc + input[0].im);
         input[0].im = m * (dc - input[0].im);
 
-        let end_table = self.len / 4;
+        let end_table = self.len >> 2;
 
         for i in 1..end_table {
             let cos_idx = i;
             let sin_idx = end_table - i;
-            let j = self.len / 2 - i;
+            let j = (self.len >> 1) - i;
 
             let a_re = m * (input[i].re + input[j].re);
             let b_im = m * (input[i].re - input[j].re);

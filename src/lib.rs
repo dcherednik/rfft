@@ -1,3 +1,21 @@
+//! rfft allows user to perform efficient FFT computation of "real input"
+
+//! The benefit especially noticeable in case of huge fft size (for example 40% in case 32768 input values)
+//! Like other similar libraries, the result value coresponding to nyquist frequency value placed in
+//! imaginary part of first complex value (result[0].im)
+//! ```
+//! This library uses RustFFT library to perform Radix4 FFT calculation.
+//! // Example, we have 4096 real values and want to calculate fft
+//!
+//! use num::complex::Complex;
+//! use rustfft::num_traits::Zero;
+//! use rfft::{RFFT, RFFTImpl};
+//! let mut input:  Vec<f64> = vec![Zero::zero(); 4096];
+//! let mut result: Vec<Complex<f64>> = vec![Zero::zero(); 2048];
+//! let rfft = RFFTImpl::new(src.len());
+//! rfft.process(&mut input, &mut result);
+//!
+
 pub extern crate num_complex;
 extern crate rustfft;
 
