@@ -11,13 +11,13 @@ use ::{RFFT, RIFFT, Length};
 pub struct RFFTImpl<T> {
     len: usize,
     cos: Box<[T]>,
-    fft: Box<FFT<T>>
+    fft: Box<dyn FFT<T>>
 }
 
 pub struct RIFFTImpl<T> {
     len: usize,
     cos: Box<[T]>,
-    fft: Box<FFT<T>>
+    fft: Box<dyn FFT<T>>
 }
 
 #[inline]
@@ -26,7 +26,7 @@ fn cast<T: FFTnum>(arr: &mut [T]) -> &mut [Complex<T>] {
     let new_len = arr.len() >> 1;
     unsafe {
         let ptr = arr.as_mut_ptr() as *mut Complex<T>;
-        (slice::from_raw_parts_mut(ptr, new_len))
+        slice::from_raw_parts_mut(ptr, new_len)
     }
 }
 
